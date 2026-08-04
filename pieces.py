@@ -1,7 +1,10 @@
+import random
+
 class Piece():
     def __init__(self, offsets:list):
         # Offsets must be a list of tuples of ints
         self.offsets = offsets
+        self.color = random.randint(1,3)
 
     def rotate_left(self):
         new_offsets = []

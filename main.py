@@ -1,6 +1,7 @@
 import pygame
 import random
 from pieces import Piece
+from spritesheet import SpriteSheet
 
 def init_board():
     board = []
@@ -10,6 +11,15 @@ def init_board():
             row.append(0)
         board.append(row)
     return board
+
+def get_tile(tile_num:int):
+    tiles = SpriteSheet('assets/Tiles.png')
+    tile_num = tile_num%3 + 1
+    width = 32
+    height = 32
+    x = (tile_num-1) * 32
+    y = 0
+    return tiles.get_image(x, y, width, height)
 
 def main():
     pygame.init()
@@ -111,7 +121,7 @@ def main():
                 else:
                     for offset in offsets:
                         pos = (anchor[0]+offset[0], anchor[1]+offset[1])
-                        board[pos[1]][pos[0]] = 1
+                        board[pos[1]][pos[0]] = active_piece.color
                     hasActivePiece = False
                     for row_num in range(len(board)):
                         row = board[row_num]
@@ -156,7 +166,7 @@ def main():
         elif mode == "game over":
             if height >= 0:
                 for tilenum in range(len(board[height])):
-                    board[height][tilenum] = 1
+                    board[height][tilenum] = (height%3) + 1
             height -= 1
             if height < -10:
                 mode = "line clear"
@@ -164,11 +174,17 @@ def main():
         # draw to the screen
         for row_num in range(len(board)):
             for col_num in range(len(board[row_num])):
-                pygame.draw.rect(window, (0, 0, 255*board[row_num][col_num]), (440+col_num*32, 738-row_num*32, 32, 32))
+                if board[row_num][col_num] != 0:
+                    img = get_tile(board[row_num][col_num])
+                    pos = (440+col_num*32, 738-row_num*32)
+                    window.blit(img, pos)
+                else:
+                    pygame.draw.rect(window, (0, 0, 0), (440+col_num*32, 738-row_num*32, 32, 32))
         if mode == "game" and hasActivePiece:
             for offset in offsets:
-                pos = (anchor[0]+offset[0], anchor[1]+offset[1])
-                pygame.draw.rect(window, (0, 0, 255), (440+pos[0]*32, 738-pos[1]*32, 32, 32))
+                img = get_tile(active_piece.color)
+                pos = (440+(anchor[0]+offset[0])*32, 738-(anchor[1]+offset[1])*32)
+                window.blit(img, pos)
         pygame.display.flip()
         clock.tick(fps)
 
