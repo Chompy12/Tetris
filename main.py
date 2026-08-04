@@ -39,6 +39,7 @@ def main():
     line_cleared = False
     changes_made = False
     fps = 60
+    delay = 3
 
     running = True
     while running: # Main game loop
@@ -66,6 +67,8 @@ def main():
                     elif event.key == pygame.K_e and not hasRotated:
                         active_piece.rotate_right()
                         hasRotated = True
+                    elif (event.key == pygame.K_a or event.key == pygame.K_d) and not hasRotated:
+                        delay = 0
             keys = pygame.key.get_pressed()
             
             if keys[pygame.K_a] and dir_to_move == (0,0) and not hasRotated: # Only move one direction or rotate one direction
@@ -85,13 +88,16 @@ def main():
                     active_piece.set_offsets(offsets)
 
             # Horizantal movement
-            if dir_to_move != (0, 0):
+            if dir_to_move != (0, 0) and delay == 0:
                 isValidMove = True
                 for offset in offsets:
                     pos = (anchor[0]+offset[0]+dir_to_move[0], anchor[1]+offset[1])
                     isValidMove = pos[0] >= 0 and pos[0] < 10 and board[pos[1]][pos[0]] == 0 and isValidMove
                 if isValidMove:
                     anchor = (anchor[0]+dir_to_move[0], anchor[1])
+                delay = 3
+            elif delay != 0:
+                delay -= 1
 
             # Vertical movement
             if frames_to_fall == 0:
