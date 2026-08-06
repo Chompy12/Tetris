@@ -50,6 +50,8 @@ def main():
     changes_made = False
     fps = 60
     delay = 3
+    score = 0
+    font = pygame.font.SysFont(None, 36)
 
     running = True
     while running: # Main game loop
@@ -93,7 +95,7 @@ def main():
                 isValidRotation = True
                 for offset in active_piece.offsets:
                     pos = (anchor[0]+offset[0], anchor[1]+offset[1])
-                    isValidRotation = pos[0] >= 0 and pos[0] < 10 and pos[1] >= 0 and board[pos[1]][pos[0]] == 0 and isValidRotation
+                    isValidRotation = pos[0] >= 0 and pos[0] < 10 and pos[1] >= 0 and pos[1] < len(board) and board[pos[1]][pos[0]] == 0 and isValidRotation
                 if not isValidRotation:
                     active_piece.set_offsets(offsets)
 
@@ -123,22 +125,17 @@ def main():
                         pos = (anchor[0]+offset[0], anchor[1]+offset[1])
                         board[pos[1]][pos[0]] = active_piece.color
                     hasActivePiece = False
-                    for row_num in range(len(board)):
-                        row = board[row_num]
-                        row_is_full = True
-                        for tile in row:
-                            row_is_full = tile != 0 and row_is_full
-                        if row_is_full:
-                            mode = "line clear"
                     if anchor[1] > 20:
                         mode = "game over"
                         height = 22
+                    else:
+                        mode = "line clear"
             else:
                 frames_to_fall -= 1
 
         elif mode == "line clear":
             fps = 10
-            if line_cleared or changes_made:
+            if changes_made:
                 changes_made = False
                 for row_num in range(20):
                     row = board[row_num]
@@ -150,7 +147,7 @@ def main():
                             changes_made = True
 
             if not changes_made:
-                line_cleared = False
+                num_lines_cleared = 0
                 for row_num in range(len(board)):
                     row = board[row_num]
                     row_is_full = True
@@ -159,9 +156,12 @@ def main():
                     if row_is_full:
                         for tilenum in range(len(row)):
                             board[row_num][tilenum] = 0
-                        line_cleared = True
-                if not line_cleared:
+                        num_lines_cleared += 1
+                if num_lines_cleared == 0:
                     mode = "game"
+                else:
+                    score += (num_lines_cleared-1)*200*(level+1)+100
+                    changes_made = True
 
         elif mode == "game over":
             if height >= 0:
@@ -169,6 +169,7 @@ def main():
                     board[height][tilenum] = (height%3) + 1
             height -= 1
             if height < -10:
+                score = -4500
                 mode = "line clear"
         
         # draw to the screen
@@ -185,6 +186,8 @@ def main():
                 img = get_tile(active_piece.color)
                 pos = (440+(anchor[0]+offset[0])*32, 738-(anchor[1]+offset[1])*32)
                 window.blit(img, pos)
+        score_text = font.render(f"{score}", True, (255,255,255))
+        window.blit(score_text, (10, 10))
         pygame.display.flip()
         clock.tick(fps)
 
