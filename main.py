@@ -45,8 +45,8 @@ def main():
     mode = "game"
     hasActivePiece = False
     level = 0
-    frames_to_fall_table = [30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12]
-    line_cleared = False
+    frames_to_fall_table = [30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12,11,10,9,8,7,6,5,4,3,2,1,0]
+    lines_to_next_level = 20
     changes_made = False
     fps = 60
     delay = 3
@@ -119,7 +119,10 @@ def main():
                     isValidMove = pos[1] >= 0 and board[pos[1]][pos[0]] == 0 and isValidMove
                 if isValidMove:
                     anchor = (anchor[0], anchor[1]-1)
-                    frames_to_fall = frames_to_fall_table[level]
+                    try:
+                        frames_to_fall = frames_to_fall_table[level]
+                    except IndexError:
+                        frames_to_fall = 0
                 else:
                     for offset in offsets:
                         pos = (anchor[0]+offset[0], anchor[1]+offset[1])
@@ -127,7 +130,7 @@ def main():
                     hasActivePiece = False
                     if anchor[1] > 20:
                         mode = "game over"
-                        height = 22
+                        height = 20
                     else:
                         mode = "line clear"
             else:
@@ -160,7 +163,11 @@ def main():
                 if num_lines_cleared == 0:
                     mode = "game"
                 else:
-                    score += (num_lines_cleared-1)*200*(level+1)+100
+                    lines_to_next_level -= num_lines_cleared
+                    if lines_to_next_level <= 0:
+                        level+=1
+                        lines_to_next_level = 20
+                    score += ((num_lines_cleared-1)*200+100)*(level+1)
                     changes_made = True
 
         elif mode == "game over":
@@ -169,13 +176,19 @@ def main():
                     board[height][tilenum] = (height%3) + 1
             height -= 1
             if height < -10:
-                score = -4500
-                mode = "line clear"
+                for row_num in range(len(board)):
+                    for col_num in range(len(board[row_num])):
+                        board[row_num][col_num] = 0
+                score = 0
+                level = 0
+                mode = "game"
         
         # draw to the screen
         for row_num in range(len(board)):
             for col_num in range(len(board[row_num])):
-                if board[row_num][col_num] != 0:
+                if row_num > 20:
+                    pygame.draw.rect(window, (128,128,128), (440+col_num*32, 738-row_num*32, 32, 32))
+                elif board[row_num][col_num] != 0:
                     img = get_tile(board[row_num][col_num])
                     pos = (440+col_num*32, 738-row_num*32)
                     window.blit(img, pos)
@@ -183,11 +196,14 @@ def main():
                     pygame.draw.rect(window, (0, 0, 0), (440+col_num*32, 738-row_num*32, 32, 32))
         if mode == "game" and hasActivePiece:
             for offset in offsets:
-                img = get_tile(active_piece.color)
-                pos = (440+(anchor[0]+offset[0])*32, 738-(anchor[1]+offset[1])*32)
-                window.blit(img, pos)
+                if anchor[1]+offset[1] <= 20:
+                    img = get_tile(active_piece.color)
+                    pos = (440+(anchor[0]+offset[0])*32, 738-(anchor[1]+offset[1])*32)
+                    window.blit(img, pos)
         score_text = font.render(f"{score}", True, (255,255,255))
         window.blit(score_text, (10, 10))
+        level_text = font.render(f"{level}", True, (255,255,255))
+        window.blit(level_text, (10, 40))
         pygame.display.flip()
         clock.tick(fps)
 
